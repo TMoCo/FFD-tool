@@ -30,6 +30,9 @@ class Mesh
     void getBarycentricWeights(std::vector<Vector>& triangulationMesh);
     void drawBarycentricMesh(std::vector<Vector>& triangulationMesh);
 
+    // trilinear
+    void getTrilinearWeights(int gridSize);
+    void drawTrilinearMesh(std::vector<Vector>& gridVertices, int gridSize);
 
     void drawFileMesh();
     // check for whether a mesh has been loaded 

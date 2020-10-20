@@ -103,7 +103,7 @@ void Mesh::getVertexWeights(GridBuilder* gridBuilder)
         getBarycentricWeights(gridBuilder->_triangulationMesh);
         break;
     case Grid::Trilinear:
-        // get trilinear weights;
+        getTrilinearWeights(gridBuilder->_gridSize);
         break;
     default:
         break;
@@ -122,7 +122,7 @@ void Mesh::drawMesh(GridBuilder* gridBuilder)
             drawBarycentricMesh(gridBuilder->_triangulationMesh);
            break;
         case Grid::Trilinear:
-            drawFileMesh();
+            drawTrilinearMesh(gridBuilder->_grid, gridBuilder->getGridSize());
            break;
 
         default:
@@ -206,7 +206,7 @@ void Mesh::getBarycentricWeights(std::vector<Vector>& triangulationMesh)
         // get weights for the vertex depending ontriangulation mesh
         for(unsigned int triangle = 0; triangle < triangulationMesh.size(); triangle+=3)
         {
-            // get the values of s and t
+            // calculate the areas of the triangles and two of its subtriangles
             float triangleArea = Vector::dot(Vector(0.0, 0.0, 1.0), 
                 Vector::cross(triangulationMesh[triangle + 1] - triangulationMesh[triangle], triangulationMesh[triangle + 2] - triangulationMesh[triangle]));
             float zeta1 = Vector::dot(Vector(0.0, 0.0, 1.0), 
@@ -214,6 +214,7 @@ void Mesh::getBarycentricWeights(std::vector<Vector>& triangulationMesh)
             float zeta2 = Vector::dot(Vector(0.0, 0.0, 1.0), 
                 Vector::cross(triangulationMesh[triangle + 1] - triangulationMesh[triangle], _meshVertices[vertex] - triangulationMesh[triangle]));
 
+            // get the values of s and t 
             float s = zeta1 / triangleArea;
             float t = zeta2 / triangleArea;
 
@@ -252,6 +253,69 @@ void Mesh::drawBarycentricMesh(std::vector<Vector>& triangulationMesh)
     }
     glEnd();
 }
+
+// Trilinear                                                        //
+// -----------------------------------------------------------------//
+//                                                                  //
+
+// virtually identical to bilinear except that we also want the z component
+void Mesh::getTrilinearWeights(int gridSize)
+{
+    // resize weights vertex
+    _weights.resize(_meshVertices.size());
+    _faces.resize(_meshVertices.size());
+    // determine what the grid origin is
+    Vector gridOrigin = Vector(-_modelSize/2.0, _modelSize/2.0, -_modelSize/2.0);
+    // iterate over each mesh vertex 
+    for (unsigned int vertex = 0; vertex < _meshVertices.size(); vertex++)
+    {
+        // determine what it's grid row and column (face) it belongs to
+        // Vector from grid origin to vertex position
+        Vector toOrigin = (gridOrigin - _meshVertices[vertex]) / (_modelSize / (gridSize-1));
+        // Add data to weights and faces for easy rendering
+        _weights[vertex] = Vector((int)toOrigin.x - toOrigin.x, toOrigin.y - (int)toOrigin.y, (int)toOrigin.z - toOrigin.z);
+        _faces[vertex] = Vector(-(int)toOrigin.x, (int)toOrigin.y, -(int)toOrigin.z);
+    }
+}
+
+void Mesh::drawTrilinearMesh(std::vector<Vector>& gridVertices, int gridSize)
+{
+    glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
+    glBegin(GL_TRIANGLES);
+    // for each vertex, draw a vertex at the interpolated position
+    for(unsigned int vertex = 0; vertex < _meshVertices.size(); vertex++)
+    {
+        // get the row and column indices for face point calc
+        // row and col are both in relation to gridsize with the top right 
+        // corner as the origin
+        int cel = _faces[vertex].z;
+        int row = _faces[vertex].y;
+        int col = _faces[vertex].x;
+        // get weights
+        float u = _weights[vertex].x; 
+        float v = _weights[vertex].y;
+        float w = _weights[vertex].z;
+        // fetch vectors
+        Vector p000 = gridVertices[cel*gridSize*gridSize + row*gridSize + col];
+        Vector p001 = gridVertices[cel*gridSize*gridSize + row*gridSize + col+1];
+        Vector p010 = gridVertices[cel*gridSize*gridSize + (row+1)*gridSize + col];
+        Vector p011 = gridVertices[cel*gridSize*gridSize + (row+1)*gridSize + col+1];
+        Vector p100 = gridVertices[(cel+1)*gridSize*gridSize + row*gridSize + col];
+        Vector p101 = gridVertices[(cel+1)*gridSize*gridSize + row*gridSize + col+1];
+        Vector p110 = gridVertices[(cel+1)*gridSize*gridSize + (row+1)*gridSize + col];
+        Vector p111 = gridVertices[(cel+1)*gridSize*gridSize + (row+1)*gridSize + col+1];
+
+        // calculate vertex position based on grid vertices which we can access with row and col
+        Vector p0 = calcBilinear(u, v, p010, p000, p011, p001);
+        Vector p1 = calcBilinear(u, v, p110, p100, p111, p101);
+
+        Vector deformedVertex = p0 * w + p1 * (1-w);
+
+        glVertex3f(deformedVertex.x, deformedVertex.y, deformedVertex.z);
+    }
+    glEnd();
+}
+
 
 // Utility                                                          //
 // -----------------------------------------------------------------//
