@@ -47,6 +47,7 @@ class Window : public  QWidget
     QCheckBox *regular3DGrid;
     QCheckBox *attenuation;
     QButtonGroup *gridCheckBoxes;
+    QPushButton *resetRotation;
     QPushButton *changeGridButton;
 };
 

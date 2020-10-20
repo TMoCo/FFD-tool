@@ -36,6 +36,8 @@ class DeformWidget : public QGLWidget
     void changeGridType(int value);
     // set the attenuation flag
     void setAttenuation(int value);
+    // reset arc ball rotation to initial state
+    void resetRotation();
 
     //signals
 

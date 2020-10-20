@@ -38,6 +38,7 @@ Window::Window(QWidget *parent)
     regular3DGrid = new QCheckBox("Regular grid (3D)", this);
     attenuation = new QCheckBox("Attenuation", this);
     changeGridButton = new QPushButton("Apply changes", this);
+    resetRotation = new QPushButton("Reset rotation", this);
     gridLayout = new QGridLayout;
 
     gridSlider->setRange(2, 10);    
@@ -55,6 +56,7 @@ Window::Window(QWidget *parent)
     gridLayout->addWidget(regular3DGrid, 5, 0);
     gridLayout->addWidget(attenuation, 6, 0);
     gridLayout->addWidget(changeGridButton, 7, 1, 3, 1);
+    gridLayout->addWidget(resetRotation, 7, 0, 3, 1);
     gridGroupBox->setLayout(gridLayout);
 
     // Window layout
@@ -72,6 +74,7 @@ Window::Window(QWidget *parent)
     QObject::connect(gridCheckBoxes, SIGNAL(buttonClicked(int)), deform, SLOT(changeGridType(int)));
     QObject::connect(attenuation, SIGNAL(stateChanged(int)), deform, SLOT(setAttenuation(int)));
     QObject::connect(changeGridButton, SIGNAL(clicked()), deform, SLOT(buildGrid()));
+    QObject::connect(resetRotation, SIGNAL(clicked()), deform, SLOT(resetRotation()));
 }
 
 // opens up a file browser dialog and emits a signal to the GL widget if a mesh file is chosen

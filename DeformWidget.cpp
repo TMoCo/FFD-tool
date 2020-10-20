@@ -271,6 +271,14 @@ void DeformWidget::setAttenuation(int value)
 {
     attenuation = value;
 }
+// reset the arc ball rotation
+void DeformWidget::resetRotation()
+{
+    Ball_Init(&objectBall);		
+    Ball_Place(&objectBall, qOne, 0.80);
+    updateGL();
+}
+
 //
 // Debug
 //
