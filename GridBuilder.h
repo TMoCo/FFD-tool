@@ -7,7 +7,7 @@
 
 enum struct Grid 
 {
-    Bilinear, Barycentric
+    Bilinear, Barycentric, Trilinear
 };
 
 // Grid builder class containts all data relating the 
@@ -39,7 +39,10 @@ class GridBuilder
     // Barycentric methods
     void drawTriangularGrid();
     void generateTriangularGrid(float modelSize);
-    
+    // Trilinear methods
+    void draw3DGrid();
+    void generateRegular3DGrid(float modelSize);
+
     void setGridSize(int size);
     void setGridType(Grid gridType);
     void setGridVector(int index, Vector vertex);

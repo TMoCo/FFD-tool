@@ -58,6 +58,10 @@ void GridBuilder::generateGrid(float modelSize)
             // generate triangular mesh
             generateTriangularGrid(modelSize);
             break;
+        case Grid::Trilinear:
+            // generate triangular mesh
+            generateRegular3DGrid(modelSize);
+            break;
         default:
             break;
     }
@@ -73,6 +77,9 @@ void GridBuilder::drawGrid()
         break;
     case Grid::Barycentric:
         drawTriangularGrid();
+        break;
+    case Grid::Trilinear:
+        draw3DGrid();
         break;
     default:
         break;
@@ -145,6 +152,12 @@ void GridBuilder::updateGrid(Vector move, int index)
                 }
             }
             // update the _grid vertex
+            _grid[index].x += move.x;
+            _grid[index].y += move.y;
+            _grid[index].z += move.z;
+            break;
+        case Grid::Trilinear:
+            // directly move grid vertex
             _grid[index].x += move.x;
             _grid[index].y += move.y;
             _grid[index].z += move.z;
@@ -270,6 +283,92 @@ void GridBuilder::drawTriangularGrid()
     {
         Vector* v = &(_triangulationMesh[i]);
         glVertex3fv(&v->x);        
+    }
+    glEnd();
+}
+
+//
+// Trilinear
+//
+
+// generate a regular 3D grid depending on the loaded mesh's size
+void GridBuilder::generateRegular3DGrid(float modelSize)
+{
+    // intialise grid vertices
+    _grid.resize(_gridSize * _gridSize * _gridSize);
+    // start at -length/2 (far top left corner)
+    Vector startPos = Vector(-modelSize/2.0, modelSize/2.0, -modelSize/2.0);
+    // z loop
+    for(int cel = 0; cel < _gridSize; cel++)
+    {
+        // y loop
+        for(int row = 0; row < _gridSize; row++)
+        {
+            // x loop
+            for(int col = 0; col < _gridSize; col++)
+            {
+                _grid[cel*_gridSize*_gridSize + row*_gridSize + col] = startPos +
+                    Vector(col * modelSize / (float)(_gridSize-1), row * -modelSize / (float)(_gridSize-1), cel * modelSize / (float)(_gridSize-1));
+            }
+        }
+    }
+}
+
+// draw a regular 3D grid
+void GridBuilder::draw3DGrid()
+{
+    // draw all x lines
+    // y loop
+    glBegin(GL_LINES);
+    for(int cel = 0; cel < _gridSize; cel++)
+    {
+        for(int row = 0; row < _gridSize; row++)
+        {   
+            // x loop
+            for(int col = 0; col < _gridSize - 1; col++)
+            {
+                glVertex3f( _grid[cel*_gridSize*_gridSize + row*_gridSize + col].x, 
+                                _grid[cel*_gridSize*_gridSize + row*_gridSize + col].y, 
+                                _grid[cel*_gridSize*_gridSize + row*_gridSize + col].z);
+                glVertex3f( _grid[cel*_gridSize*_gridSize + row*_gridSize + (col+1)].x, 
+                                _grid[cel*_gridSize*_gridSize + row*_gridSize + (col+1)].y, 
+                                _grid[cel*_gridSize*_gridSize + row*_gridSize + (col+1)].z);
+            }
+        }
+    }
+    // draw all y lines
+    // y loop
+    for(int cel = 0; cel < _gridSize; cel++)
+    {
+        for(int row = 0; row < _gridSize - 1; row++)
+        {   
+            // x loop
+            for(int col = 0; col < _gridSize; col++)
+            {
+                glVertex3f( _grid[cel*_gridSize*_gridSize + row*_gridSize + col].x, 
+                                _grid[cel*_gridSize*_gridSize + row*_gridSize + col].y, 
+                                _grid[cel*_gridSize*_gridSize + row*_gridSize + col].z);
+                glVertex3f( _grid[cel*_gridSize*_gridSize + (row+1)*_gridSize + col].x, 
+                                _grid[cel*_gridSize*_gridSize + (row+1)*_gridSize + col].y, 
+                                _grid[cel*_gridSize*_gridSize + (row+1)*_gridSize + col].z);
+            }
+        }
+    }
+    // draw all z lines
+    for(int cel = 0; cel < _gridSize - 1; cel++)
+    {
+        for(int row = 0; row < _gridSize; row++)
+        {
+            for(int col = 0; col < _gridSize; col++)
+            {
+                glVertex3f( _grid[cel*_gridSize*_gridSize + row*_gridSize + col].x, 
+                                _grid[cel*_gridSize*_gridSize + row*_gridSize + col].y, 
+                                _grid[cel*_gridSize*_gridSize + row*_gridSize + col].z);
+                glVertex3f( _grid[(cel+1)*_gridSize*_gridSize + row*_gridSize + col].x, 
+                                _grid[(cel+1)*_gridSize*_gridSize + row*_gridSize + col].y, 
+                                _grid[(cel+1)*_gridSize*_gridSize + row*_gridSize + col].z);
+            }
+        }
     }
     glEnd();
 }

@@ -47,6 +47,7 @@ Window::Window(QWidget *parent)
     gridCheckBoxes->setExclusive(true);
     gridCheckBoxes->addButton(regular2DGrid, 0);
     gridCheckBoxes->addButton(triangular2DGrid, 1);
+    gridCheckBoxes->addButton(regular3DGrid, 2);
 
     gridLayout->setAlignment(Qt::AlignTop); 
     gridLayout->addWidget(gridSliderLabel, 0, 0);
@@ -55,8 +56,8 @@ Window::Window(QWidget *parent)
     gridLayout->addWidget(triangular2DGrid, 4, 0);
     gridLayout->addWidget(regular3DGrid, 5, 0);
     gridLayout->addWidget(attenuation, 6, 0);
+    gridLayout->addWidget(resetRotation, 7, 0, 2, 1);
     gridLayout->addWidget(changeGridButton, 7, 1, 3, 1);
-    gridLayout->addWidget(resetRotation, 7, 0, 3, 1);
     gridGroupBox->setLayout(gridLayout);
 
     // Window layout

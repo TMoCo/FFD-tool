@@ -102,6 +102,9 @@ void Mesh::getVertexWeights(GridBuilder* gridBuilder)
     case Grid::Barycentric:
         getBarycentricWeights(gridBuilder->_triangulationMesh);
         break;
+    case Grid::Trilinear:
+        // get trilinear weights;
+        break;
     default:
         break;
     }
@@ -117,6 +120,9 @@ void Mesh::drawMesh(GridBuilder* gridBuilder)
             break;
         case Grid::Barycentric:
             drawBarycentricMesh(gridBuilder->_triangulationMesh);
+           break;
+        case Grid::Trilinear:
+            drawFileMesh();
            break;
 
         default:
