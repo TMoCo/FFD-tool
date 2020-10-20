@@ -20,5 +20,5 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 # Input
-HEADERS += DeformWidget.h Window.h Vector.h GridBuilder.h Mesh.h
-SOURCES += DeformWidget.cpp main.cpp Window.cpp Vector.cpp GridBuilder.cpp Mesh.cpp
+HEADERS += DeformWidget.h Window.h Vector.h GridBuilder.h Mesh.h Ball.h BallAux.h BallMath.h
+SOURCES += DeformWidget.cpp main.cpp Window.cpp Vector.cpp GridBuilder.cpp Mesh.cpp Ball.cpp BallAux.cpp BallMath.cpp

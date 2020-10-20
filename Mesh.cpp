@@ -12,7 +12,7 @@
 Mesh::Mesh()
 {
     _meshMidPoint = Vector(0.0, 0.0, 0.0);
-    _modelSize = 1.5;
+    _modelSize = 1.0;
     _meshVertices.resize(0.0);
     _weights.resize(0.0);
     _faces.resize(0.0);
@@ -141,10 +141,10 @@ void Mesh::getBilinearWeights(int gridSize)
     {
         // determine what it's grid row and column (face) it belongs to
         // Vector from grid origin to vertex position
-        Vector newVec = (gridOrigin - _meshVertices[vertex]) / (_modelSize / (gridSize-1));
+        Vector toOrigin = (gridOrigin - _meshVertices[vertex]) / (_modelSize / (gridSize-1));
         // Add data to weights and faces for easy rendering
-        _weights[vertex] = Vector((int)newVec.x - newVec.x, newVec.y - (int)newVec.y, 0.0);
-        _faces[vertex] = Vector(-(int)newVec.x, (int)newVec.y, 0.0);
+        _weights[vertex] = Vector((int)toOrigin.x - toOrigin.x, toOrigin.y - (int)toOrigin.y, 0.0);
+        _faces[vertex] = Vector(-(int)toOrigin.x, (int)toOrigin.y, 0.0);
     }
 }
 

@@ -3,6 +3,7 @@
 
 #include <QGLWidget>
 #include <QMouseEvent>
+#include <QKeyEvent>
 #include <QGridLayout>
 #include <QSize>
 #include <QString>
@@ -11,6 +12,7 @@
 
 // utility class defining vector object (3 floats) and operations 
 #include "Vector.h"
+#include "Ball.h"
 #include "GridBuilder.h"
 #include "Mesh.h"
 
@@ -52,15 +54,23 @@ class DeformWidget : public QGLWidget
     void mouseReleaseEvent(QMouseEvent *event);
 
 
-
     private:
+    int mouseButton;
     // flag representing drag status
     bool dragging;
+    // flag representing rotation status
+    bool rotating;
     // flag representing attenuation 
     bool attenuation;
 
     // mouse Input
     Vector previousMousePos;
+    Vector currentPos;
+
+    BallData objectBall;
+
+    GLfloat translate_x, translate_y;
+	GLfloat last_x, last_y;
 
     // mesh data
     Mesh mesh;

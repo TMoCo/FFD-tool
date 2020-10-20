@@ -18,7 +18,10 @@ DeformWidget::DeformWidget(QWidget *parent)
 
     mesh = Mesh();
     gridBuilder = GridBuilder();
-    
+
+    Ball_Init(&objectBall);		
+    Ball_Place(&objectBall, qOne, 0.80);
+
     // resize data 
     points.resize(0.0);
     
@@ -30,7 +33,7 @@ DeformWidget::DeformWidget(QWidget *parent)
     // init val
     closest = -1;
     previousMousePos = Vector(0.0, 0.0, 0.0);
-    
+    currentPos = Vector(0.0, 0.0, 0.0);    
 }
 
 //
@@ -62,8 +65,14 @@ void DeformWidget::resizeGL(int w, int h)
 
     float dimensions = mesh.getModelSize();
     // stick with orthogonal projection
-    glOrtho(-dimensions, dimensions, -dimensions, dimensions, -dimensions, dimensions);
+    float aspectRatio = (float) w / (float) h;
 
+    if (aspectRatio > 1.0)
+		glOrtho(-aspectRatio * dimensions, aspectRatio * dimensions, -dimensions, dimensions, -dimensions, dimensions);
+	else
+        glOrtho(-dimensions, dimensions, -dimensions/aspectRatio, dimensions/aspectRatio, -dimensions, dimensions);
+	
+    
 }
 	
 // called every time the widget needs painting
@@ -81,6 +90,10 @@ void DeformWidget::paintGL()
     // set light position first
     glLightfv(GL_LIGHT0, GL_POSITION, light_position);
     
+    GLfloat mNow[16];
+    Ball_Value(&objectBall, mNow);
+	glMultMatrixf(mNow);
+
     gridBuilder.drawGrid();
 
     if (!mesh.isEmpty())
@@ -107,47 +120,70 @@ QSize DeformWidget::sizeHint() const
 // start processing mouse event
 void DeformWidget::mousePressEvent(QMouseEvent *event)
 {
-    float worldX = (2.0 * event->localPos().x() / width()  - 1 ) * mesh.getModelSize();;
-    float worldY = (-2.0 * event->localPos().y() / height() + 1 ) * mesh.getModelSize();;
+    mouseButton = event->button();
+    HVect vNow;
+    vNow.x =   (2.0 * event->localPos().x() / width() -1) * mesh.getModelSize();
+    vNow.y = (-2.0 * event->localPos().y() / height() +1) * mesh.getModelSize();
     // check that we are clicking on a vertex
-    if((event->button() == Qt::LeftButton ) && checkClick2D(worldX, worldY))
+    switch(mouseButton)
     {
-        // set dragging to true if we are
-        dragging = true;
-
-        // for debug
-        points.push_back( worldX );
-        points.push_back( worldY );
+        case(Qt::LeftButton):
+            if (checkClick2D(vNow.x, vNow.y))
+                dragging = true;
+            break;
+        case(Qt::RightButton):
+            Ball_Mouse(&objectBall, vNow);
+			// start dragging
+			Ball_BeginDrag(&objectBall);
+			// update the widget
+			updateGL();
+            break;
     }
 }
 
 // process mouse movement (deform the grid according the direction we are travelling in)
 void DeformWidget::mouseMoveEvent(QMouseEvent *event)
 {
-    if((event->buttons() & Qt::LeftButton) && dragging)
-    {
-        // move closest vector 
-        // get mouse movement direction vector
-        float worldX = (-2.0 * event->localPos().x() / width()  + 1 ) * mesh.getModelSize();
-        float worldY = ( 2.0 * event->localPos().y() / height() - 1 ) * mesh.getModelSize();
-        
-        // change all occurences of the given vertex
-        gridBuilder.moveVertex(previousMousePos.x - worldX, previousMousePos.y - worldY, closest, attenuation);
+    // get mouse movement direction vector
+    HVect vNow;
+    vNow.x =   (2.0 * event->localPos().x() / width()  - 1 ) * mesh.getModelSize(); // worldX
+    vNow.y = (-2.0 * event->localPos().y() / height() + 1 ) * mesh.getModelSize(); // worldY
 
-        // update meshes         
-        updateGL();
-    }
+    // invert by the rotation in objectBall (the transpose since it is a rotation/orthogonal matrix)
+    float rotatedX = objectBall.mNow[0][0]*(vNow.x - previousMousePos.x) + objectBall.mNow[0][1]*(vNow.y - previousMousePos.y) + objectBall.mNow[0][2]*(vNow.z - previousMousePos.z); 
+    float rotatedY = objectBall.mNow[1][0]*(vNow.x - previousMousePos.x) + objectBall.mNow[1][1]*(vNow.y - previousMousePos.y) + objectBall.mNow[1][2]*(vNow.z - previousMousePos.z);
+    float rotatedZ = objectBall.mNow[2][0]*(vNow.x - previousMousePos.x) + objectBall.mNow[2][1]*(vNow.y - previousMousePos.y) + objectBall.mNow[2][2]*(vNow.z - previousMousePos.z);
+    
+    switch(mouseButton)
+    {
+        case(Qt::LeftButton):
+            if(dragging)
+                gridBuilder.moveVertex(Vector(rotatedX, rotatedY, rotatedZ), closest, attenuation);        
+            break;
+        case(Qt::RightButton):
+            Ball_Mouse(&objectBall, vNow);
+			Ball_Update(&objectBall);
+            break;
+    }    
+    updateGL();
     // update mouse position
-    previousMousePos.x = (-2.0 * event->localPos().x() / width()  + 1 ) * mesh.getModelSize();
-    previousMousePos.y = ( 2.0 * event->localPos().y() / height() - 1 ) * mesh.getModelSize();
+    previousMousePos.x = (2.0 * event->localPos().x() / width()  - 1 ) * mesh.getModelSize();
+    previousMousePos.y = (-2.0 * event->localPos().y() / height() + 1 ) * mesh.getModelSize();
 }
 
 // stop processing the mouses movement
 void DeformWidget::mouseReleaseEvent(QMouseEvent *event)
 {
-    if(event->button() == Qt::LeftButton && dragging)
+    switch(mouseButton)
     {
-        dragging = false;
+        case(Qt::LeftButton):
+            dragging = false;
+            updateGL();
+            break;
+        case(Qt::RightButton):
+            Ball_EndDrag(&objectBall);
+            updateGL();
+            break;
     }
 }
 
@@ -159,18 +195,22 @@ bool DeformWidget::checkClick2D(float mouseX, float mouseY)
     Vector clickOnXY = Vector(mouseX, mouseY, 0.0);
 
     closest = -1;
-
     // iterate over the list of grid vertices to find the one within the clicked area's radius
     for(unsigned int i = 0; i < gridBuilder._grid.size(); i++)
     {
-        // project mesh vertex on x y plane
-        Vector vertexOnXY = Vector(gridBuilder._grid[i].x, gridBuilder._grid[i].y, 0.0); 
-
+        // rotate the grid vertex according to the arc ball rotation
+        // just get the x and y values
+        float rotatedX = objectBall.mNow[0][0]*gridBuilder._grid[i].x + objectBall.mNow[1][0]*gridBuilder._grid[i].y + objectBall.mNow[2][0]*gridBuilder._grid[i].z; 
+        float rotatedY = objectBall.mNow[0][1]*gridBuilder._grid[i].x + objectBall.mNow[1][1]*gridBuilder._grid[i].y + objectBall.mNow[2][1]*gridBuilder._grid[i].z; 
+        float rotatedZ = objectBall.mNow[0][2]*gridBuilder._grid[i].x + objectBall.mNow[1][2]*gridBuilder._grid[i].y + objectBall.mNow[2][2]*gridBuilder._grid[i].z; 
+        
+        // then project mesh vertex on x y plane
+        Vector vertexOnXY = Vector(rotatedX, rotatedY, 0.0);
         // find the closest 
         if((clickOnXY - vertexOnXY).magnitude() < clickRadius)
         {
             // if we have multiple points in the click radius, keep the closest
-            if ((closest == -1) || abs(gridBuilder._grid[closest].z) > abs(gridBuilder._grid[i].z))
+            if ((closest == -1) || (objectBall.mNow[0][2]*gridBuilder._grid[closest].x + objectBall.mNow[1][2]*gridBuilder._grid[closest].y + objectBall.mNow[2][2]*gridBuilder._grid[closest].z < rotatedZ))
                 closest = i;
         }
     }
@@ -182,7 +222,6 @@ bool DeformWidget::checkClick2D(float mouseX, float mouseY)
 
     return false;
 }
-
 
 //
 // Mesh Methods

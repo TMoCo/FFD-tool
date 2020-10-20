@@ -55,7 +55,10 @@ SOURCES       = DeformWidget.cpp \
 		Window.cpp \
 		Vector.cpp \
 		GridBuilder.cpp \
-		Mesh.cpp moc_DeformWidget.cpp \
+		Mesh.cpp \
+		Ball.cpp \
+		BallAux.cpp \
+		BallMath.cpp moc_DeformWidget.cpp \
 		moc_Window.cpp
 OBJECTS       = DeformWidget.o \
 		main.o \
@@ -63,6 +66,9 @@ OBJECTS       = DeformWidget.o \
 		Vector.o \
 		GridBuilder.o \
 		Mesh.o \
+		Ball.o \
+		BallAux.o \
+		BallMath.o \
 		moc_DeformWidget.o \
 		moc_Window.o
 DIST          = /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_pre.prf \
@@ -142,12 +148,18 @@ DIST          = /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_pre.prf \
 		Window.h \
 		Vector.h \
 		GridBuilder.h \
-		Mesh.h DeformWidget.cpp \
+		Mesh.h \
+		Ball.h \
+		BallAux.h \
+		BallMath.h DeformWidget.cpp \
 		main.cpp \
 		Window.cpp \
 		Vector.cpp \
 		GridBuilder.cpp \
-		Mesh.cpp
+		Mesh.cpp \
+		Ball.cpp \
+		BallAux.cpp \
+		BallMath.cpp
 QMAKE_TARGET  = assignment1
 DESTDIR       = 
 TARGET        = assignment1
@@ -331,8 +343,8 @@ distdir: FORCE
 	@test -d $(DISTDIR) || mkdir -p $(DISTDIR)
 	$(COPY_FILE) --parents $(DIST) $(DISTDIR)/
 	$(COPY_FILE) --parents /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/data/dummy.cpp $(DISTDIR)/
-	$(COPY_FILE) --parents DeformWidget.h Window.h Vector.h GridBuilder.h Mesh.h $(DISTDIR)/
-	$(COPY_FILE) --parents DeformWidget.cpp main.cpp Window.cpp Vector.cpp GridBuilder.cpp Mesh.cpp $(DISTDIR)/
+	$(COPY_FILE) --parents DeformWidget.h Window.h Vector.h GridBuilder.h Mesh.h Ball.h BallAux.h BallMath.h $(DISTDIR)/
+	$(COPY_FILE) --parents DeformWidget.cpp main.cpp Window.cpp Vector.cpp GridBuilder.cpp Mesh.cpp Ball.cpp BallAux.cpp BallMath.cpp $(DISTDIR)/
 
 
 clean: compiler_clean 
@@ -368,6 +380,8 @@ compiler_moc_header_make_all: moc_DeformWidget.cpp moc_Window.cpp
 compiler_moc_header_clean:
 	-$(DEL_FILE) moc_DeformWidget.cpp moc_Window.cpp
 moc_DeformWidget.cpp: Vector.h \
+		Ball.h \
+		BallAux.h \
 		GridBuilder.h \
 		Mesh.h \
 		DeformWidget.h \
@@ -377,6 +391,8 @@ moc_DeformWidget.cpp: Vector.h \
 
 moc_Window.cpp: DeformWidget.h \
 		Vector.h \
+		Ball.h \
+		BallAux.h \
 		GridBuilder.h \
 		Mesh.h \
 		Window.h \
@@ -400,12 +416,16 @@ compiler_clean: compiler_moc_predefs_clean compiler_moc_header_clean
 
 DeformWidget.o: DeformWidget.cpp DeformWidget.h \
 		Vector.h \
+		Ball.h \
+		BallAux.h \
 		GridBuilder.h \
 		Mesh.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o DeformWidget.o DeformWidget.cpp
 
 main.o: main.cpp DeformWidget.h \
 		Vector.h \
+		Ball.h \
+		BallAux.h \
 		GridBuilder.h \
 		Mesh.h \
 		Window.h
@@ -414,6 +434,8 @@ main.o: main.cpp DeformWidget.h \
 Window.o: Window.cpp Window.h \
 		DeformWidget.h \
 		Vector.h \
+		Ball.h \
+		BallAux.h \
 		GridBuilder.h \
 		Mesh.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o Window.o Window.cpp
@@ -422,13 +444,26 @@ Vector.o: Vector.cpp Vector.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o Vector.o Vector.cpp
 
 GridBuilder.o: GridBuilder.cpp GridBuilder.h \
-		Vector.h
+		Vector.h \
+		delaunator.hpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o GridBuilder.o GridBuilder.cpp
 
 Mesh.o: Mesh.cpp Mesh.h \
 		Vector.h \
 		GridBuilder.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o Mesh.o Mesh.cpp
+
+Ball.o: Ball.cpp Ball.h \
+		BallAux.h \
+		BallMath.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o Ball.o Ball.cpp
+
+BallAux.o: BallAux.cpp BallAux.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o BallAux.o BallAux.cpp
+
+BallMath.o: BallMath.cpp BallMath.h \
+		BallAux.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o BallMath.o BallMath.cpp
 
 moc_DeformWidget.o: moc_DeformWidget.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o moc_DeformWidget.o moc_DeformWidget.cpp

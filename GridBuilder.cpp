@@ -79,7 +79,7 @@ void GridBuilder::drawGrid()
     }
 }
 
-void GridBuilder::moveVertex(float xMove, float yMove, int index, bool attenuation)
+void GridBuilder::moveVertex(Vector move, int index, bool attenuation)
 {
     if (attenuation)
     {
@@ -105,31 +105,32 @@ void GridBuilder::moveVertex(float xMove, float yMove, int index, bool attenuati
                 // calculate new weight for given vertex
                 float weight = pow(1.0 - ((_grid[index] - _grid[vertex]).magnitude() / maxDistance ), 2);
                 // now update the vertex 
-                updateGrid(xMove * weight, yMove * weight, vertex);
+                updateGrid(move * weight, vertex);
             }
             else
             {
             // directly move grid vertex
-            updateGrid(xMove, yMove, vertex);
+            updateGrid(move, vertex);
             }            
         }
     }
     else
     {
-        updateGrid(xMove, yMove, index);
+        updateGrid(move, index);
         
     }
 }
 
 // update the triangulation mesh for a given vertex
-void GridBuilder::updateGrid(float xMove, float yMove, int index)
+void GridBuilder::updateGrid(Vector move, int index)
 {
     switch (_gridType)
         {
         case Grid::Bilinear:
             // directly move grid vertex
-            _grid[index].x += xMove;
-            _grid[index].y += yMove;
+            _grid[index].x += move.x;
+            _grid[index].y += move.y;
+            _grid[index].z += move.z;
             break;
 
         case Grid::Barycentric:
@@ -138,13 +139,15 @@ void GridBuilder::updateGrid(float xMove, float yMove, int index)
             {
                 if((_triangulationMesh[i].x == _grid[index].x) && (_triangulationMesh[i].y == _grid[index].y))
                 {
-                    _triangulationMesh[i].x += xMove;
-                    _triangulationMesh[i].y += yMove;
+                    _triangulationMesh[i].x += move.x;
+                    _triangulationMesh[i].y += move.y;
+                    _triangulationMesh[i].z += move.z;
                 }
             }
             // update the _grid vertex
-            _grid[index].x += xMove;
-            _grid[index].y += yMove;
+            _grid[index].x += move.x;
+            _grid[index].y += move.y;
+            _grid[index].z += move.z;
             break;
         
         default:
