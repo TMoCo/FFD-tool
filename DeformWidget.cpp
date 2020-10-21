@@ -234,6 +234,15 @@ void DeformWidget::loadMesh(QString fileName)
     mesh.loadMesh(fileName.toStdString());
     // generate a new grid
     buildGrid();
+    // update arcBall to be 0.8 of the model
+    Ball_Place(&objectBall, qOne, 0.80 * mesh.getModelSize());
+
+}
+
+void DeformWidget::saveMesh(QString fileName)
+{
+    // do the mesh saving
+    mesh.saveMesh(fileName.toStdString(), &gridBuilder);
 }
 
 //
@@ -257,6 +266,7 @@ void DeformWidget::buildGrid()
     gridBuilder.generateGrid(mesh.getModelSize());
     // update the mesh weights 
     mesh.getVertexWeights(&gridBuilder);
+
     // update projection
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
@@ -275,7 +285,7 @@ void DeformWidget::setAttenuation(int value)
 void DeformWidget::resetRotation()
 {
     Ball_Init(&objectBall);		
-    Ball_Place(&objectBall, qOne, 0.80);
+    Ball_Place(&objectBall, qOne, 0.80 * mesh.getModelSize());
     updateGL();
 }
 

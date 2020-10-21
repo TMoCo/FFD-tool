@@ -10,7 +10,7 @@ int main(int argc, char **argv)
 
     Window aWindow(NULL);
 
-    aWindow.resize(800,550);
+    aWindow.resize(850,550);
 
     aWindow.show();
 

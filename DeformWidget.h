@@ -28,6 +28,8 @@ class DeformWidget : public QGLWidget
     public slots:
     // get a mesh file name from parent widget to be loaded 
     void loadMesh(QString fileName);
+    // save the current mesh to a .mesh file
+    void saveMesh(QString fileName);
     // upon click a button, create a grid
     void buildGrid();
     // get the new value of the slider

@@ -18,12 +18,11 @@ class Window : public  QWidget
     Window(QWidget *parent);
 
     public slots:
-    void showFileDialog();
-    void changeGrid(int type);
-    void sliderValues(int value);
-
+    void loadFileDialog();
+    void saveFileDialog();
     signals:
-    void fileFound(QString fileName);
+    void loadMeshFile(QString fileName);
+    void saveMeshFile(QString fileName);
 
     private:
     // widgets for mesh preview

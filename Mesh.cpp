@@ -90,8 +90,57 @@ void Mesh::loadMesh(std::string fileName)
     }
 }
 
-// generates vertex weights depending on the type of grid chosen
+// save the deformed mesh to a file, we need the grid data to deform the vertices 
+void Mesh::saveMesh(std::string fileName, GridBuilder* gridBuilder)
+{
+    try
+    {
+        // open a mesh file
+        std::ofstream meshFile;
+        // clear the mesh file
+        meshFile.open(fileName, std::ofstream::trunc);
+        // then start adding the mesh data
+        
+        // number of faces
+        meshFile << _meshVertices.size() / 3 << "\n";
+        // each vertex
+        for(unsigned int vertex = 0; vertex < _meshVertices.size(); vertex++)
+        {
+            switch(gridBuilder->_gridType)
+            {
+                case Grid::Bilinear:
+                {
+                    Vector deformedVertex = deformBilinear(vertex, gridBuilder->_grid, gridBuilder->_gridSize);
+                    meshFile << deformedVertex.x << " " << deformedVertex.y << " " << deformedVertex.z << "\n";
+                    break;
+                }
+                case Grid::Barycentric:
+                {
+                    Vector deformedVertex = deformBarycentric(vertex++, gridBuilder->_triangulationMesh);
+                    meshFile << deformedVertex.x << " " << deformedVertex.y << " " << deformedVertex.z << "\n";
+                    break;
+                }
+                case Grid::Trilinear:
+                {
+                    Vector deformedVertex = deformTrilinear(vertex, gridBuilder->_grid, gridBuilder->_gridSize);
+                    meshFile << deformedVertex.x << " " << deformedVertex.y << " " << deformedVertex.z << "\n";
+                    break;
+                }
+            }
+        }
+        meshFile.close();
+    
+    }
+    catch(const std::exception& e)
+    {
+        QMessageBox errorMsg;
+        errorMsg.setText("Could not open file.");
+        errorMsg.exec();
+    }
+    
+}
 
+// generates vertex weights depending on the type of grid chosen
 void Mesh::getVertexWeights(GridBuilder* gridBuilder)
 {
     switch (gridBuilder->getGridType())
@@ -160,34 +209,43 @@ void Mesh::drawBilinearMesh(std::vector<Vector>& gridVertices, int gridSize)
     glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
     glBegin(GL_TRIANGLES);
     // for each vertex, draw a vertex at the interpolated position
-    for(unsigned int vertex = 0; vertex < _meshVertices.size(); vertex++)
+    for(unsigned int vertex = 0; vertex < _meshVertices.size(); )
     {
-        // get the row and column indices for face point calc
-        // row and col are both in relation to gridsize with the top right 
-        // corner as the origin
-        int row = _faces[vertex].y;
-        int col = _faces[vertex].x;
-        // get weights
-        float u = _weights[vertex].x; 
-        float v = _weights[vertex].y;
-        // calculate vertex position based on grid vertices which we can access with row and col
-        Vector p00 = gridVertices[(row + 1) * gridSize + col    ];
-        Vector p10 = gridVertices[(row + 1) * gridSize + col + 1];
-        Vector p01 = gridVertices[row * gridSize + col    ];
-        Vector p11 = gridVertices[row * gridSize + col + 1];
-
-        Vector deformedVertex = calcBilinear(u, v, p00, p01, p10, p11);
-
-        glVertex3f(deformedVertex.x, deformedVertex.y, deformedVertex.z);
+       Vector v0 = deformBilinear(vertex++, gridVertices, gridSize);
+       Vector v1 = deformBilinear(vertex++, gridVertices, gridSize);
+       Vector v2 = deformBilinear(vertex++, gridVertices, gridSize);
+       
+       // We don't compute the normals here because we are in fact squishing all
+       // the faces of the model onto the xy plane, which gives awful results for 3d
+       // meshes and overlapping faces
+       glVertex3fv(&v0.x);
+       glVertex3fv(&v1.x);
+       glVertex3fv(&v2.x);
     }
     glEnd();
 }
 
-// return the bilinear interpolation of the given points for a regular grid
-Vector Mesh::calcBilinear(float u, float v, Vector p00, Vector p01, Vector p10, Vector p11)
+// returns the bilinear interpolation of a given vertex relative to its grid vertices 
+Vector Mesh::deformBilinear(int vertex, std::vector<Vector>& gridVertices, int gridSize)
 {
-    return p10 * u * v + p00 * v * (1 - u) + p11 * u * (1 - v) + p01 * (1 - u) * (1 - v);
+    // get the row and column indices for face point calc
+    // row and col are both in relation to gridsize with the top right 
+    // corner as the origin
+    int row = _faces[vertex].y;
+    int col = _faces[vertex].x;
+    // get weights
+    float u = _weights[vertex].x; 
+    float v = _weights[vertex].y;
+    // calculate vertex position based on grid vertices which we can access with row and col
+    Vector p00 = gridVertices[(row + 1) * gridSize + col    ];
+    Vector p10 = gridVertices[(row + 1) * gridSize + col + 1];
+    Vector p01 = gridVertices[row * gridSize + col    ];
+    Vector p11 = gridVertices[row * gridSize + col + 1];
+
+    Vector deformedVertex = p10 * u * v + p00 * v * (1-u) + p11 * u * (1-v) + p01 * (1-u) * (1-v);
+    return deformedVertex;
 }
+
 
 // Barycentric                                                      //
 // -----------------------------------------------------------------//
@@ -242,16 +300,27 @@ void Mesh::drawBarycentricMesh(std::vector<Vector>& triangulationMesh)
     // get the vertex's weights
     // get the positions of each vertex stored in faces (by id)
     // interpolate based on weights and faces
-    for (unsigned int vertex = 0; vertex < _meshVertices.size(); vertex++)
+    for (unsigned int vertex = 0; vertex < _meshVertices.size(); )
     {
-        // get triangle data and multiply by the corresponding weight
-        Vector deformedVertex = triangulationMesh[_faces[vertex].x] * _weights[vertex].x + 
-                                triangulationMesh[_faces[vertex].y] * _weights[vertex].y + 
-                                triangulationMesh[_faces[vertex].z] * _weights[vertex].z;
-        // add deformed vertex
-        glVertex3f(deformedVertex.x, deformedVertex.y, deformedVertex.z);
+        Vector v0 = deformBarycentric(vertex++, triangulationMesh);
+        Vector v1 = deformBarycentric(vertex++, triangulationMesh);
+        Vector v2 = deformBarycentric(vertex++, triangulationMesh);
+        
+        // Don't draw normal for same reasons as bilinear
+        glVertex3fv(&v0.x);
+        glVertex3fv(&v1.x);
+        glVertex3fv(&v2.x);
     }
     glEnd();
+}
+
+Vector Mesh::deformBarycentric(int vertex, std::vector<Vector>& triangulationMesh)
+{
+    // get triangle data for desired vertex and multiply by the corresponding weight
+    Vector deformedVertex = triangulationMesh[_faces[vertex].x] * _weights[vertex].x + 
+                                triangulationMesh[_faces[vertex].y] * _weights[vertex].y + 
+                                triangulationMesh[_faces[vertex].z] * _weights[vertex].z;
+    return deformedVertex;
 }
 
 // Trilinear                                                        //
@@ -283,9 +352,27 @@ void Mesh::drawTrilinearMesh(std::vector<Vector>& gridVertices, int gridSize)
     glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
     glBegin(GL_TRIANGLES);
     // for each vertex, draw a vertex at the interpolated position
-    for(unsigned int vertex = 0; vertex < _meshVertices.size(); vertex++)
+    for(unsigned int vertex = 0; vertex < _meshVertices.size(); )
     {
-        // get the row and column indices for face point calc
+        Vector v0 = deformTrilinear(vertex++, gridVertices, gridSize);
+        Vector v1 = deformTrilinear(vertex++, gridVertices, gridSize);
+        Vector v2 = deformTrilinear(vertex++, gridVertices, gridSize);
+        // now compute the normal vector
+        Vector uVec = v1 - v0;
+        Vector vVec = v2 - v0;
+        Vector normal = Vector::cross(uVec, vVec).normalise();
+
+        glNormal3fv(&normal.x);
+        glVertex3fv(&v0.x);
+        glVertex3fv(&v1.x);
+        glVertex3fv(&v2.x);
+    }
+    glEnd();
+}
+
+Vector Mesh::deformTrilinear(int vertex, std::vector<Vector>& gridVertices, int gridSize)
+{
+    // get the row and column indices for face point calc
         // row and col are both in relation to gridsize with the top right 
         // corner as the origin
         int cel = _faces[vertex].z;
@@ -305,17 +392,14 @@ void Mesh::drawTrilinearMesh(std::vector<Vector>& gridVertices, int gridSize)
         Vector p110 = gridVertices[(cel+1)*gridSize*gridSize + (row+1)*gridSize + col];
         Vector p111 = gridVertices[(cel+1)*gridSize*gridSize + (row+1)*gridSize + col+1];
 
-        // calculate vertex position based on grid vertices which we can access with row and col
-        Vector p0 = calcBilinear(u, v, p010, p000, p011, p001);
-        Vector p1 = calcBilinear(u, v, p110, p100, p111, p101);
+        // calculate vertex position based on grid vertices which we can access with row and col (x and y)
+        Vector p0 = p011 * u * v + p010 * v * (1 - u) + p001 * u * (1 - v) + p000 * (1 - u) * (1 - v);
+        Vector p1 = p111 * u * v + p110 * v * (1 - u) + p101 * u * (1 - v) + p100 * (1 - u) * (1 - v);
+        // apply another step for z
+        Vector deformedVertex = p0 * (1-w) + p1 * w;
 
-        Vector deformedVertex = p0 * w + p1 * (1-w);
-
-        glVertex3f(deformedVertex.x, deformedVertex.y, deformedVertex.z);
-    }
-    glEnd();
+        return deformedVertex;
 }
-
 
 // Utility                                                          //
 // -----------------------------------------------------------------//
