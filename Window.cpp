@@ -38,7 +38,6 @@ Window::Window(QWidget *parent)
     regular2DGrid = new QCheckBox("Regular grid (2D)", this);
     triangular2DGrid = new QCheckBox("Triangular grid", this);
     regular3DGrid = new QCheckBox("Regular grid (3D)", this);
-    attenuation = new QCheckBox("Attenuation", this);
     changeGridButton = new QPushButton("Apply changes", this);
     resetRotation = new QPushButton("Reset rotation", this);
     gridLayout = new QGridLayout;
@@ -51,23 +50,37 @@ Window::Window(QWidget *parent)
     gridCheckBoxes->addButton(triangular2DGrid, 1);
     gridCheckBoxes->addButton(regular3DGrid, 2);
 
-    gridLayout->setAlignment(Qt::AlignTop); 
     gridLayout->addWidget(gridSliderLabel, 0, 0);
     gridLayout->addWidget(gridSlider, 1, 0, 1, 3);
-    gridLayout->addWidget(regular2DGrid, 3, 0);
-    gridLayout->addWidget(triangular2DGrid, 4, 0);
-    gridLayout->addWidget(regular3DGrid, 5, 0);
-    gridLayout->addWidget(attenuation, 6, 0);
-    gridLayout->addWidget(resetRotation, 7, 0, 2, 1);
-    gridLayout->addWidget(changeGridButton, 7, 1, 2, 2);
+    gridLayout->addWidget(regular2DGrid, 2, 0);
+    gridLayout->addWidget(triangular2DGrid, 3, 0);
+    gridLayout->addWidget(regular3DGrid, 4, 0);
+    gridLayout->addWidget(changeGridButton, 5, 1, 1, 2);
+    gridLayout->addWidget(resetRotation, 10, 0, 1, 2);
     gridGroupBox->setLayout(gridLayout);
+
+    // attenuation options layout
+    attenuationGroupBox = new QGroupBox(tr("Attenuation Options"));
+    attenuationSliderLabel = new QLabel(tr("Attenuation scale"), this);
+    attenuationSlider = new QSlider(Qt::Horizontal, this);
+    attenuation = new QCheckBox("Apply attenuation", this);
+    attenuationLayout = new QGridLayout;
+
+    attenuationSlider->setRange(1, 5);
+    attenuationSlider->setSingleStep(1);
+    attenuationLayout->addWidget(attenuationSliderLabel, 1, 0);
+    attenuationLayout->addWidget(attenuationSlider, 2, 0, 1, 3);
+    attenuationLayout->addWidget(attenuation, 3, 0);
+    attenuationGroupBox->setLayout(attenuationLayout);
 
     // Window layout
     QGridLayout *layout = new QGridLayout;
     layout->setAlignment(Qt::AlignTop); 
-    layout->addWidget(deformGroupBox, 0, 0, 4, 1);
+    layout->addWidget(deformGroupBox, 0, 0, 5, 1);
     layout->addWidget(fileGroupBox, 0, 1);
     layout->addWidget(gridGroupBox, 1, 1);
+    layout->addWidget(attenuationGroupBox, 2, 1);
+    layout->addWidget(resetRotation, 3, 1, Qt::AlignCenter);
     setLayout(layout);
 
     // connect widgets
@@ -77,6 +90,7 @@ Window::Window(QWidget *parent)
     QObject::connect(this, SIGNAL(saveMeshFile(QString)), deform, SLOT(saveMesh(QString)));
     QObject::connect(gridSlider, SIGNAL(valueChanged(int)), deform, SLOT(changeGridSize(int)));
     QObject::connect(gridCheckBoxes, SIGNAL(buttonClicked(int)), deform, SLOT(changeGridType(int)));
+    QObject::connect(attenuationSlider, SIGNAL(valueChanged(int)), deform, SLOT(changeAttenuation(int)));
     QObject::connect(attenuation, SIGNAL(stateChanged(int)), deform, SLOT(setAttenuation(int)));
     QObject::connect(changeGridButton, SIGNAL(clicked()), deform, SLOT(buildGrid()));
     QObject::connect(resetRotation, SIGNAL(clicked()), deform, SLOT(resetRotation()));

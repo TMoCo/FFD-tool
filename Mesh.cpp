@@ -45,6 +45,7 @@ void Mesh::loadMesh(std::string fileName)
         nVertices = nTriangles * 3;
 
         // now allocate space for them all
+        _meshVertices.clear();
         _meshVertices.resize(nVertices);
         
         // now loop to read the vertices in, and hope nothing goes wrong
@@ -75,15 +76,14 @@ void Mesh::loadMesh(std::string fileName)
 
         // the bounding sphere radius is just half the distance between these
         _modelSize = (maxCoords - minCoords).magnitude();
-
-        // generate a grid
-        //gridBuilder = GridBuilder(gridSize, modelSize, gridType);
-
-        // trigger a resizeGL to paint the changes and incorporate new projection
-        //resizeGL(height(), width());
+        // this happens if a mesh file only contains the same vertices
+        if(_modelSize == 0.0)
+            throw std::exception();
     }
     catch (const std::exception& e)
     {
+        _modelSize = 1.0;
+        _meshVertices.clear();
         QMessageBox errorMsg;
         errorMsg.setText("Could not open file.");
         errorMsg.exec();
@@ -284,7 +284,6 @@ void Mesh::getBarycentricWeights(std::vector<Vector>& triangulationMesh)
                 // store the triangulation vertices for when we want to draw the model mesh
                 _faces[vertex] = Vector(triangle, triangle + 1, triangle + 2);
                 // break the loop over triangulation mesh
-                std::cout << _weights[vertex] << std::endl;
                 break;
             }
         }

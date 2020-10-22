@@ -33,7 +33,8 @@ DeformWidget::DeformWidget(QWidget *parent)
     // init val
     closest = -1;
     previousMousePos = Vector(0.0, 0.0, 0.0);
-    currentPos = Vector(0.0, 0.0, 0.0);    
+    currentPos = Vector(0.0, 0.0, 0.0);
+    attenuationScale = 1;
 }
 
 //
@@ -158,7 +159,7 @@ void DeformWidget::mouseMoveEvent(QMouseEvent *event)
     {
         case(Qt::LeftButton):
             if(dragging)
-                gridBuilder.moveVertex(Vector(rotatedX, rotatedY, rotatedZ), closest, attenuation);        
+                gridBuilder.moveVertex(Vector(rotatedX, rotatedY, rotatedZ), closest, attenuation, attenuationScale);        
             break;
         case(Qt::RightButton):
             Ball_Mouse(&objectBall, vNow);
@@ -280,6 +281,11 @@ void DeformWidget::buildGrid()
 void DeformWidget::setAttenuation(int value)
 {
     attenuation = value;
+}
+// change the attenuation scale
+void DeformWidget::changeAttenuation(int value)
+{
+    attenuationScale = value;
 }
 // reset the arc ball rotation
 void DeformWidget::resetRotation()

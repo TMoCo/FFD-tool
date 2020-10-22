@@ -38,6 +38,8 @@ class DeformWidget : public QGLWidget
     void changeGridType(int value);
     // set the attenuation flag
     void setAttenuation(int value);
+    // change the attenuation scale
+    void changeAttenuation(int value);
     // reset arc ball rotation to initial state
     void resetRotation();
 
@@ -66,6 +68,8 @@ class DeformWidget : public QGLWidget
     bool rotating;
     // flag representing attenuation 
     bool attenuation;
+    // attenuation scale
+    int attenuationScale;
 
     // mouse Input
     Vector previousMousePos;

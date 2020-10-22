@@ -30,7 +30,7 @@ class GridBuilder
     std::vector<Vector> _triangulationMesh;
 
     // update the grid when dragging the mouse in deform widget
-    void moveVertex(Vector move, int index, bool attenuation);
+    void moveVertex(Vector move, int index, bool attenuation, int attenuationScale);
     void updateGrid(Vector move, int index);
 
     // Bilinear methods

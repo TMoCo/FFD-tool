@@ -86,7 +86,7 @@ void GridBuilder::drawGrid()
     }
 }
 
-void GridBuilder::moveVertex(Vector move, int index, bool attenuation)
+void GridBuilder::moveVertex(Vector move, int index, bool attenuation, int attenuationScale)
 {
     if (attenuation)
     {
@@ -110,8 +110,9 @@ void GridBuilder::moveVertex(Vector move, int index, bool attenuation)
             if( vertex != index )
             {
                 // calculate new weight for given vertex
-                float weight = pow(1.0 - ((_grid[index] - _grid[vertex]).magnitude() / maxDistance ), 2);
-                // now update the vertex 
+                // max attenuation slider value is 5.0
+                float weight = pow(1.0 - ((_grid[index] - _grid[vertex]).magnitude() / maxDistance ), 2.0 ) * ((float)attenuationScale / 5.0);
+                // now update the vertex
                 updateGrid(move * weight, vertex);
             }
             else
