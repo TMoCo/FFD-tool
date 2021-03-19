@@ -15,3 +15,4 @@ To apply the desired changes to the grid, click apply changes. This will reset t
 
 Attenutation can be switched on or off (default off) for any grid by checking the attenuation checkbox, and scaled up or down with the slider.
 
+![Example](https://media.giphy.com/media/btRWgnTUqRztYbBdZD/giphy.gif)
