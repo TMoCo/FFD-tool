@@ -4,7 +4,7 @@ Libraries used:
     Qt version 5.9.5
     OpenGL 4.6
     GLU
-    Delaunator (https://github.com/delfrrr/delaunator-cpp) 
+    Delaunator for triangulating (https://github.com/delfrrr/delaunator-cpp) 
 
 How to use the tool:
 
@@ -14,3 +14,4 @@ Change grid type by selecting grid options in GIU (regular 2D grid, mesh from tr
 To apply the desired changes to the grid, click apply changes. This will reset the model mesh to the one originally loaded. 
 
 Attenutation can be switched on or off (default off) for any grid by checking the attenuation checkbox, and scaled up or down with the slider.
+
